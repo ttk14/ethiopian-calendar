@@ -6,52 +6,54 @@
 <title>Ethiopian and Gregorian Calendar</title>
 <meta name="description" content="Ethiopian and Gregorian calendar tools: convert dates, add days, find weekdays, and more. Runs C++ compiled to WebAssembly." />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap');
-  :root{--green:#05360A;--card:#f4f8f4;--line:#dbe4db;--grey:#5a5a5a;--ink:#1a1a1a;--bg:#fff;}
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Noto+Serif+Ethiopic:wght@400;500;600&display=swap');
+  :root{--green:#1F4D34;--card:#FBF7EC;--line:#E4D6B4;--grey:#6B5A38;--gold:#B88A2A;--red:#97362B;--ink:#2E2A22;--bg:#F6EEDD;--field:#FDFAF1;--todaybg:#F1E4BC;--headbg:#F3E9CF;--onink:#F6EEDD;}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,'Noto Serif Ethiopic',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
   .wrap{max-width:860px;margin:0 auto;padding:40px 24px 64px}
-  header{border-bottom:3px solid var(--green);padding-bottom:18px}
-  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:2.1rem;letter-spacing:-.3px}
-  .sub{color:var(--grey);margin-top:8px}
+  header{border-bottom:2px solid var(--gold);padding-bottom:16px}
+  h1{font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;font-weight:600;color:var(--green);font-size:2rem;letter-spacing:-.2px}
+  .entitle{font-family:'Playfair Display',Georgia,serif;color:var(--grey);font-size:1.05rem;margin-top:2px}
+  .sub{color:var(--grey);margin-top:10px;font-size:.92rem}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
   @media(max-width:560px){.cards{grid-template-columns:1fr 1fr}}
   .fcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;transition:.12s}
-  .fcard:hover{border-color:var(--green)}
+  .fcard:hover{border-color:var(--gold)}
   .fcard.active{background:var(--green);border-color:var(--green)}
-  .fcard.active .ft,.fcard.active .fd{color:#fff}
-  .ft{display:block;font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.02rem}
+  .fcard.active .ft,.fcard.active .fd{color:var(--onink)}
+  .ft{display:block;font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;font-weight:600;color:var(--green);font-size:1.02rem}
   .fd{display:block;color:var(--grey);font-size:.8rem;margin-top:3px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;min-height:120px}
-  .panel h2{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.25rem;margin-bottom:14px}
+  .panel h2{font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;font-weight:600;color:var(--green);font-size:1.25rem;margin-bottom:14px}
   label{display:block;font-size:.8rem;color:var(--grey);margin:10px 0 4px}
-  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:#fff;color:var(--ink);font-family:inherit}
-  input:focus,select:focus{outline:none;border-color:var(--green)}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:var(--field);color:var(--ink);font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
   .drow{display:grid;grid-template-columns:1fr 1.5fr .9fr;gap:8px}
   .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:6px}
-  .segbtn{background:#fff;border:none;padding:7px 15px;cursor:pointer;font:inherit;color:var(--grey)}
-  .segbtn.active{background:var(--green);color:#fff}
-  button.go{margin-top:16px;font:inherit;font-weight:600;color:#fff;background:var(--green);border:none;border-radius:8px;padding:9px 20px;cursor:pointer}
+  .segbtn{background:var(--field);border:none;padding:7px 15px;cursor:pointer;font:inherit;color:var(--grey)}
+  .segbtn.active{background:var(--green);color:var(--onink)}
+  button.go{margin-top:16px;font:inherit;font-weight:600;color:var(--onink);background:var(--green);border:none;border-radius:8px;padding:9px 20px;cursor:pointer}
   button.go:hover{opacity:.92}
   .result{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .result .wd{font-size:.85rem;color:var(--grey)}
-  .result .big{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;margin-top:2px}
-  .result .am{margin-top:2px}
-  .cal{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px;background:#fff}
-  .calhead{display:flex;align-items:center;justify-content:space-between;background:#e9f1e9;padding:12px 16px}
-  .calttl{flex:1;text-align:center;font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;line-height:1.15}
+  .result .big{font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;margin-top:2px}
+  .result .am{margin-top:2px;color:var(--red)}
+  .cal{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px;background:var(--field)}
+  .calhead{display:flex;align-items:center;justify-content:space-between;background:var(--headbg);padding:12px 16px}
+  .calttl{flex:1;text-align:center;font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;line-height:1.15}
   .calsub{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:600;color:var(--grey);font-size:.78rem;margin-top:2px}
   .calarrow{background:none;border:none;font-size:1.6rem;color:var(--green);cursor:pointer;padding:0 10px;line-height:1}
-  .calweek{display:grid;grid-template-columns:repeat(7,1fr);background:#f6f9f6}
+  .calweek{display:grid;grid-template-columns:repeat(7,1fr);background:var(--card)}
   .calweek>div{padding:6px 2px;text-align:center;border-top:1px solid var(--line);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:1px}
   .calweek .wa{color:var(--green);font-weight:600;font-size:.8rem}
+  .calweek>div:first-child .wa{color:var(--red)}
   .calweek .we{color:var(--grey);font-size:.68rem}
   .calgrid{display:grid;grid-template-columns:repeat(7,1fr)}
   .calcell{min-height:58px;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:5px 8px}
-  .calcell .big{font-family:'Fraunces',Georgia,serif;color:var(--green);font-size:1.15rem;line-height:1}
+  .calcell .big{font-family:'Playfair Display','Noto Serif Ethiopic',Georgia,serif;color:var(--green);font-size:1.15rem;line-height:1}
   .calcell .small{color:var(--grey);font-size:.72rem;margin-top:4px}
-  .calcell.empty{background:#fafbfa}
-  .calcell.today{background:#fdf3d4}
+  .calcell.empty{background:#F3EEDE}
+  .calcell.today{background:var(--todaybg);box-shadow:inset 3px 0 0 var(--red)}
   footer{margin-top:30px;color:var(--grey);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
   footer a{color:var(--green);text-decoration:none}
 </style>
@@ -59,7 +61,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Ethiopian and Gregorian Calendar</h1>
+    <h1>የኢትዮጵያ የቀን መቁጠሪያ</h1>
+    <p class="entitle">Ethiopian &amp; Gregorian Calendar</p>
     <p class="sub">Pick a tool. The Ethiopian calendar has 13 months: twelve of 30 days and Pagume, a short month of 5 or 6 days.</p>
   </header>
 
@@ -136,6 +139,8 @@ CalendarModule().then(function (Module) {
       else { sec=gToE(year,month,d).day; isToday=(year===tg.year&&month===tg.month&&d===tg.day); }
       cells+=`<div class="calcell${isToday?" today":""}"><div class="big">${d}</div><div class="small">${sec}</div></div>`;
     }
+    const trailing=(7-((startW+last)%7))%7;
+    for(let i=0;i<trailing;i++) cells+=`<div class="calcell empty"></div>`;
     return `<div class="cal"><div class="calhead"><button class="calarrow" data-dir="-1">&lsaquo;</button><div class="calttl">${title}<div class="calsub">${sub}</div></div><button class="calarrow" data-dir="1">&rsaquo;</button></div><div class="calweek">${wk}</div><div class="calgrid">${cells}</div></div>`;
   }
 
