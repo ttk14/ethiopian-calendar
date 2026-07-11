@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ethiopian and Gregorian Calendar</title>
+<meta name="description" content="Ethiopian and Gregorian calendar tools: convert dates, add days, find weekdays, and more. Runs C++ compiled to WebAssembly." />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap');
+  :root{--green:#05360A;--card:#f4f8f4;--line:#dbe4db;--grey:#5a5a5a;--ink:#1a1a1a;--bg:#fff;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 24px 64px}
+  header{border-bottom:3px solid var(--green);padding-bottom:18px}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:2.1rem;letter-spacing:-.3px}
+  .sub{color:var(--grey);margin-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
+  @media(max-width:560px){.cards{grid-template-columns:1fr 1fr}}
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;transition:.12s}
+  .fcard:hover{border-color:var(--green)}
+  .fcard.active{background:var(--green);border-color:var(--green)}
+  .fcard.active .ft,.fcard.active .fd{color:#fff}
+  .ft{display:block;font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.02rem}
+  .fd{display:block;color:var(--grey);font-size:.8rem;margin-top:3px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;min-height:120px}
+  .panel h2{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.25rem;margin-bottom:14px}
+  label{display:block;font-size:.8rem;color:var(--grey);margin:10px 0 4px}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:#fff;color:var(--ink);font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--green)}
+  .drow{display:grid;grid-template-columns:1fr 1.5fr .9fr;gap:8px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:6px}
+  .segbtn{background:#fff;border:none;padding:7px 15px;cursor:pointer;font:inherit;color:var(--grey)}
+  .segbtn.active{background:var(--green);color:#fff}
+  button.go{margin-top:16px;font:inherit;font-weight:600;color:#fff;background:var(--green);border:none;border-radius:8px;padding:9px 20px;cursor:pointer}
+  button.go:hover{opacity:.92}
+  .result{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .result .wd{font-size:.85rem;color:var(--grey)}
+  .result .big{font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;margin-top:2px}
+  .result .am{margin-top:2px}
+  .cal{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px;background:#fff}
+  .calhead{display:flex;align-items:center;justify-content:space-between;background:#e9f1e9;padding:12px 16px}
+  .calttl{flex:1;text-align:center;font-family:'Fraunces',Georgia,serif;font-weight:600;color:var(--green);font-size:1.3rem;line-height:1.15}
+  .calsub{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:600;color:var(--grey);font-size:.78rem;margin-top:2px}
+  .calarrow{background:none;border:none;font-size:1.6rem;color:var(--green);cursor:pointer;padding:0 10px;line-height:1}
+  .calweek{display:grid;grid-template-columns:repeat(7,1fr);background:#f6f9f6}
+  .calweek>div{padding:6px 2px;text-align:center;border-top:1px solid var(--line);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:1px}
+  .calweek .wa{color:var(--green);font-weight:600;font-size:.8rem}
+  .calweek .we{color:var(--grey);font-size:.68rem}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .calcell{min-height:58px;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:5px 8px}
+  .calcell .big{font-family:'Fraunces',Georgia,serif;color:var(--green);font-size:1.15rem;line-height:1}
+  .calcell .small{color:var(--grey);font-size:.72rem;margin-top:4px}
+  .calcell.empty{background:#fafbfa}
+  .calcell.today{background:#fdf3d4}
+  footer{margin-top:30px;color:var(--grey);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+  footer a{color:var(--green);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Ethiopian and Gregorian Calendar</h1>
+    <p class="sub">Pick a tool. The Ethiopian calendar has 13 months: twelve of 30 days and Pagume, a short month of 5 or 6 days.</p>
+  </header>
+
+  <div class="cards" id="cards"></div>
+  <div class="panel" id="panel">Loading the calendar engine&hellip;</div>
+
+  <footer>
+    Built by Tarik Tadese Kassa. The date math runs as C++ compiled to WebAssembly, the same code as the
+    command-line program (<code>calendar.cpp</code>), using an original month-by-month conversion.
+    &nbsp;&middot;&nbsp; <a href="https://github.com/ttk14/ethiopian-calendar">Source on GitHub</a>
+  </footer>
+</div>
+
+<script src="calendar.js"></script>
+<script>
+CalendarModule().then(function (Module) {
+
+  // ---------------- bind the C++ functions (compiled to WebAssembly) ----------------
+  const C = {
+    g2e:       Module.cwrap("g2e", "number", ["number", "number", "number"]),
+    e2g:       Module.cwrap("e2g", "number", ["number", "number", "number"]),
+    weekday_g: Module.cwrap("weekday_g", "number", ["number", "number", "number"]),
+    is_leap_g: Module.cwrap("is_leap_g", "number", ["number"]),
+    is_leap_e: Module.cwrap("is_leap_e", "number", ["number"]),
+    add_days:  Module.cwrap("add_days", "number", ["number", "number", "number", "number", "number"]),
+    diff_days: Module.cwrap("diff_days", "number", ["number", "number", "number", "number", "number", "number"]),
+  };
+  const unpack = p => ({ year: Math.trunc(p / 10000), month: Math.trunc(p / 100) % 100, day: p % 100 });
+  const gToE = (y, m, d) => unpack(C.g2e(y, m, d));
+  const eToG = (y, m, d) => unpack(C.e2g(y, m, d));
+  const wdG  = (y, m, d) => C.weekday_g(y, m, d);
+  const wdOf = (cal, y, m, d) => { if (cal === "E") { const g = eToG(y, m, d); return C.weekday_g(g.year, g.month, g.day); } return C.weekday_g(y, m, d); };
+  const gregLeap = y => !!C.is_leap_g(y);
+  const ethLeap  = y => !!C.is_leap_e(y);
+  const gDays = (y, m) => m === 2 ? (gregLeap(y) ? 29 : 28) : [31,28,31,30,31,30,31,31,30,31,30,31][m - 1];
+  const eDays = (y, m) => m === 13 ? (ethLeap(y) ? 6 : 5) : 30;
+
+  const EM=[["Meskerem","መስከረም"],["Tikimt","ጥቅምት"],["Hidar","ኅዳር"],["Tahsas","ታኅሣሥ"],["Tir","ጥር"],["Yekatit","የካቲት"],["Megabit","መጋቢት"],["Miyazia","ሚያዝያ"],["Ginbot","ግንቦት"],["Sene","ሰኔ"],["Hamle","ሐምሌ"],["Nehase","ነሐሴ"],["Pagume","ጳጉሜን"]];
+  const GM=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const WD=[["Sunday","እሑድ"],["Monday","ሰኞ"],["Tuesday","ማክሰኞ"],["Wednesday","ረቡዕ"],["Thursday","ሐሙስ"],["Friday","ዓርብ"],["Saturday","ቅዳሜ"]];
+  const fmtG = d => `${GM[d.month-1]} ${d.day}, ${d.year}`;
+
+  function spanLabel(a,b,cal){
+    if(cal==="G"){
+      if(a.year===b.year&&a.month===b.month) return `${GM[a.month-1]} ${a.year}`;
+      if(a.year===b.year) return `${GM[a.month-1]} - ${GM[b.month-1]} ${a.year}`;
+      return `${GM[a.month-1]} ${a.year} - ${GM[b.month-1]} ${b.year}`;
+    }
+    if(a.year===b.year&&a.month===b.month) return `${EM[a.month-1][0]} ${a.year} E.C.`;
+    if(a.year===b.year) return `${EM[a.month-1][0]} - ${EM[b.month-1][0]} ${a.year} E.C.`;
+    return `${EM[a.month-1][0]} ${a.year} - ${EM[b.month-1][0]} ${b.year} E.C.`;
+  }
+
+  function monthGrid(cal,year,month){
+    const t=new Date(); const tg={year:t.getFullYear(),month:t.getMonth()+1,day:t.getDate()};
+    const te=gToE(tg.year,tg.month,tg.day);
+    let last,title,sub,startW;
+    if(cal==="E"){
+      last=eDays(year,month);
+      title=`${EM[month-1][1]} &nbsp;&nbsp; ${year}`;
+      sub=spanLabel(eToG(year,month,1),eToG(year,month,last),"G");
+      startW=wdOf("E",year,month,1);
+    }else{
+      last=gDays(year,month);
+      title=`${GM[month-1]} &nbsp;&nbsp; ${year}`;
+      sub=spanLabel(gToE(year,month,1),gToE(year,month,last),"E");
+      startW=wdG(year,month,1);
+    }
+    let wk=""; WD.forEach(w=>wk+=`<div><span class="wa">${w[1]}</span><span class="we">${w[0].slice(0,3)}</span></div>`);
+    let cells=""; for(let i=0;i<startW;i++) cells+=`<div class="calcell empty"></div>`;
+    for(let d=1;d<=last;d++){
+      let sec,isToday;
+      if(cal==="E"){ sec=eToG(year,month,d).day; isToday=(year===te.year&&month===te.month&&d===te.day); }
+      else { sec=gToE(year,month,d).day; isToday=(year===tg.year&&month===tg.month&&d===tg.day); }
+      cells+=`<div class="calcell${isToday?" today":""}"><div class="big">${d}</div><div class="small">${sec}</div></div>`;
+    }
+    return `<div class="cal"><div class="calhead"><button class="calarrow" data-dir="-1">&lsaquo;</button><div class="calttl">${title}<div class="calsub">${sub}</div></div><button class="calarrow" data-dir="1">&rsaquo;</button></div><div class="calweek">${wk}</div><div class="calgrid">${cells}</div></div>`;
+  }
+
+  // ---------------- reusable date field (both calendars, defaults to today) ----------------
+  function dateFieldHTML(id,label){
+    return `<div class="datefield" id="${id}">
+      <label>${label||"Date"}</label>
+      <div class="seg"><button type="button" class="segbtn active" data-cal="G">Gregorian</button><button type="button" class="segbtn" data-cal="E">Ethiopian</button></div>
+      <div class="gpart"><div class="drow">
+        <div><input type="number" id="${id}_gY" placeholder="Year"></div>
+        <div><select id="${id}_gM"></select></div>
+        <div><select id="${id}_gD"></select></div>
+      </div></div>
+      <div class="epart" style="display:none"><div class="drow">
+        <div><input type="number" id="${id}_eY" min="1" placeholder="Year"></div>
+        <div><select id="${id}_eM"></select></div>
+        <div><select id="${id}_eD"></select></div>
+      </div></div>
+    </div>`;
+  }
+  function initDateField(id){
+    const t=new Date(), gy=t.getFullYear(), gm=t.getMonth()+1, gd=t.getDate();
+    const et=gToE(gy,gm,gd);
+    const gY=document.getElementById(id+"_gY"),gM=document.getElementById(id+"_gM"),gD=document.getElementById(id+"_gD");
+    GM.forEach((mo,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=mo;gM.appendChild(o);});
+    gY.value=gy; gM.value=gm;
+    const fillG=()=>{const y=+gY.value||gy,m=+gM.value,mx=gDays(y,m),cur=+gD.value||gd;gD.innerHTML="";for(let d=1;d<=mx;d++){const o=document.createElement("option");o.value=d;o.textContent=d;gD.appendChild(o);}gD.value=Math.min(cur,mx);};
+    fillG();
+    gY.addEventListener("input",fillG); gM.addEventListener("change",fillG);
+    const eY=document.getElementById(id+"_eY"),eM=document.getElementById(id+"_eM"),eD=document.getElementById(id+"_eD");
+    EM.forEach((mo,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=`${mo[1]} (${mo[0]})`;eM.appendChild(o);});
+    eY.value=et.year; eM.value=et.month;
+    const fillE=()=>{const y=+eY.value||et.year,m=+eM.value,mx=eDays(y,m),cur=+eD.value||et.day;eD.innerHTML="";for(let d=1;d<=mx;d++){const o=document.createElement("option");o.value=d;o.textContent=d;eD.appendChild(o);}eD.value=Math.min(cur,mx);};
+    fillE();
+    eY.addEventListener("input",fillE); eM.addEventListener("change",fillE);
+    document.querySelectorAll(`#${id} .segbtn`).forEach(b=>b.addEventListener("click",()=>{
+      document.querySelectorAll(`#${id} .segbtn`).forEach(x=>x.classList.remove("active"));b.classList.add("active");
+      document.querySelector(`#${id} .gpart`).style.display=b.dataset.cal==="G"?"":"none";
+      document.querySelector(`#${id} .epart`).style.display=b.dataset.cal==="E"?"":"none";
+    }));
+  }
+  function fieldCal(id){return document.querySelector(`#${id} .segbtn.active`).dataset.cal;}
+  function fieldDate(id){
+    const cal=fieldCal(id);
+    if(cal==="G") return {cal,y:+document.getElementById(id+"_gY").value,m:+document.getElementById(id+"_gM").value,d:+document.getElementById(id+"_gD").value};
+    return {cal,y:+document.getElementById(id+"_eY").value,m:+document.getElementById(id+"_eM").value,d:+document.getElementById(id+"_eD").value};
+  }
+
+  // ---------------- features ----------------
+  let timer=null;
+  function clearTimers(){if(timer){clearInterval(timer);timer=null;}}
+  const panel=document.getElementById("panel");
+  const resultBox='<div class="result" id="res"></div>';
+
+  function renderToday(){
+    panel.innerHTML='<h2>Today</h2><div id="res"></div>';
+    const res=document.getElementById("res");
+    const tick=()=>{
+      const n=new Date();const g={year:n.getFullYear(),month:n.getMonth()+1,day:n.getDate()};
+      const e=gToE(g.year,g.month,g.day);const w=WD[wdG(g.year,g.month,g.day)];
+      let eh=((n.getHours()-6)%12+12)%12;if(eh===0)eh=12;
+      res.innerHTML=`<div class="wd">${w[0]} &middot; ${w[1]}</div>
+        <div class="big">${fmtG(g)}</div>
+        <div class="am">${e.day} ${EM[e.month-1][1]} (${EM[e.month-1][0]}) ${e.year} E.C.</div>
+        <div class="wd" style="margin-top:8px">Local time ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}:${String(n.getSeconds()).padStart(2,"0")} &middot; Ethiopian time about ${eh}:${String(n.getMinutes()).padStart(2,"0")}</div>`;
+    };
+    tick();timer=setInterval(tick,1000);
+  }
+
+  function renderConvert(){
+    panel.innerHTML=`<h2>Convert a date</h2>${dateFieldHTML("cv","Date to convert")}<button class="go" id="go">Convert</button>${resultBox}`;
+    initDateField("cv");
+    document.getElementById("go").onclick=()=>{
+      const f=fieldDate("cv");const res=document.getElementById("res");
+      if(f.cal==="G"){const e=gToE(f.y,f.m,f.d);const w=WD[wdG(f.y,f.m,f.d)];res.innerHTML=`<div class="wd">${w[0]} &middot; ${w[1]}</div><div class="big">${e.day} ${EM[e.month-1][0]} ${e.year} E.C.</div><div class="am">${e.day} ${EM[e.month-1][1]} ${e.year} ዓ.ም.</div>`;}
+      else{const g=eToG(f.y,f.m,f.d);const w=WD[wdOf("E",f.y,f.m,f.d)];res.innerHTML=`<div class="wd">${w[0]} &middot; ${w[1]}</div><div class="big">${fmtG(g)}</div><div class="am">Gregorian calendar</div>`;}
+    };
+    document.getElementById("go").click();
+  }
+
+  function renderAdd(){
+    panel.innerHTML=`<h2>Add days</h2>${dateFieldHTML("ad","Start date")}<label>Days to add (use a negative number to go back)</label><input type="number" id="ndays" value="30">${resultBox}<button class="go" id="go">Calculate</button>`;
+    initDateField("ad");
+    document.getElementById("go").onclick=()=>{
+      const f=fieldDate("ad");const n=parseInt(document.getElementById("ndays").value||"0",10);
+      const r=unpack(C.add_days(f.cal==="E"?1:0,f.y,f.m,f.d,n));const res=document.getElementById("res");
+      if(f.cal==="G"){const w=WD[wdG(r.year,r.month,r.day)];res.innerHTML=`<div class="wd">${w[0]}</div><div class="big">${fmtG(r)}</div>`;}
+      else{const w=WD[wdOf("E",r.year,r.month,r.day)];res.innerHTML=`<div class="wd">${w[0]}</div><div class="big">${r.day} ${EM[r.month-1][0]} ${r.year} E.C.</div>`;}
+    };
+    document.getElementById("go").click();
+  }
+
+  function renderBetween(){
+    panel.innerHTML=`<h2>Days between two dates</h2>${dateFieldHTML("b1","First date")}<div style="height:12px"></div>${dateFieldHTML("b2","Second date")}<button class="go" id="go">Calculate</button>${resultBox}`;
+    initDateField("b1");initDateField("b2");
+    document.getElementById("go").onclick=()=>{
+      const f1=fieldDate("b1"),f2=fieldDate("b2");
+      const g1=f1.cal==="E"?eToG(f1.y,f1.m,f1.d):{year:f1.y,month:f1.m,day:f1.d};
+      const g2=f2.cal==="E"?eToG(f2.y,f2.m,f2.d):{year:f2.y,month:f2.m,day:f2.d};
+      const days=C.diff_days(g1.year,g1.month,g1.day,g2.year,g2.month,g2.day);
+      document.getElementById("res").innerHTML=`<div class="big">${days} days</div>`;
+    };
+    document.getElementById("go").click();
+  }
+
+  function renderZemen(){
+    const t=new Date(); const ey=gToE(t.getFullYear(),t.getMonth()+1,t.getDate()).year;
+    panel.innerHTML=`<h2>ዘመን (Evangelist year)</h2><label>Ethiopian year</label><input type="number" id="zy" min="1" value="${ey}"><button class="go" id="go">Show</button>${resultBox}`;
+    const ev=["ዘመነ ዮሐንስ (Year of John)","ዘመነ ማቴዎስ (Year of Matthew)","ዘመነ ማርቆስ (Year of Mark)","ዘመነ ሉቃስ (Year of Luke)"];
+    const show=()=>{const y=+document.getElementById("zy").value;document.getElementById("res").innerHTML=`<div class="big">${ev[((y%4)+4)%4]}</div><div class="wd">${ethLeap(y)?"A leap year (Pagume has 6 days).":"A common year (Pagume has 5 days)."}</div>`;};
+    document.getElementById("go").onclick=show; document.getElementById("zy").addEventListener("input",show); show();
+  }
+
+  function renderLeap(){
+    const t=new Date(), gy=t.getFullYear(), ey=gToE(gy,t.getMonth()+1,t.getDate()).year;
+    panel.innerHTML=`<h2>Leap year</h2><div class="seg" id="lseg"><button type="button" class="segbtn active" data-cal="G">Gregorian</button><button type="button" class="segbtn" data-cal="E">Ethiopian</button></div><label>Year</label><input type="number" id="ly" min="1" value="${gy}"><button class="go" id="go">Check</button>${resultBox}`;
+    const ly=document.getElementById("ly");
+    const check=()=>{const y=+ly.value;const cal=document.querySelector("#lseg .segbtn.active").dataset.cal;const leap=cal==="G"?gregLeap(y):ethLeap(y);document.getElementById("res").innerHTML=`<div class="big">${y} is ${leap?"a leap year":"not a leap year"}</div>`;};
+    document.querySelectorAll("#lseg .segbtn").forEach(b=>b.onclick=()=>{document.querySelectorAll("#lseg .segbtn").forEach(x=>x.classList.remove("active"));b.classList.add("active");ly.value=(b.dataset.cal==="G"?gy:ey);check();});
+    document.getElementById("go").onclick=check; ly.addEventListener("input",check); check();
+  }
+
+  function renderWeekday(){
+    panel.innerHTML=`<h2>Weekday</h2>${dateFieldHTML("wk","Date")}<button class="go" id="go">Find weekday</button>${resultBox}`;
+    initDateField("wk");
+    document.getElementById("go").onclick=()=>{const f=fieldDate("wk");const w=WD[wdOf(f.cal,f.y,f.m,f.d)];document.getElementById("res").innerHTML=`<div class="big">${w[0]}</div><div class="am">${w[1]}</div>`;};
+    document.getElementById("go").click();
+  }
+
+  function renderEthMonth(){
+    panel.innerHTML=`<h2>Ethiopian month</h2><div class="drow"><div><label>Year</label><input type="number" id="my" min="1"></div><div><label>Month</label><select id="mm"></select></div><div></div></div><div id="calwrap"></div>`;
+    const my=document.getElementById("my"),mm=document.getElementById("mm");
+    EM.forEach((mo,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=`${mo[1]} (${mo[0]})`;mm.appendChild(o);});
+    const t=new Date(); const et=gToE(t.getFullYear(),t.getMonth()+1,t.getDate());
+    my.value=et.year; mm.value=et.month;
+    function draw(){
+      let y=+my.value||2016,m=+mm.value;const w=document.getElementById("calwrap");
+      w.innerHTML=monthGrid("E",y,m);
+      w.querySelectorAll(".calarrow").forEach(b=>b.onclick=()=>{let nm=m+(+b.dataset.dir),ny=y;if(nm<1){nm=13;ny--;}if(nm>13){nm=1;ny++;}my.value=ny;mm.value=nm;draw();});
+    }
+    my.addEventListener("input",draw);mm.addEventListener("change",draw);draw();
+  }
+
+  function renderGregMonth(){
+    panel.innerHTML=`<h2>Gregorian month</h2><div class="drow"><div><label>Year</label><input type="number" id="my" min="1"></div><div><label>Month</label><select id="mm"></select></div><div></div></div><div id="calwrap"></div>`;
+    const my=document.getElementById("my"),mm=document.getElementById("mm");
+    GM.forEach((mo,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=mo;mm.appendChild(o);});
+    const n=new Date(); my.value=n.getFullYear(); mm.value=n.getMonth()+1;
+    function draw(){
+      let y=+my.value||2026,m=+mm.value;const w=document.getElementById("calwrap");
+      w.innerHTML=monthGrid("G",y,m);
+      w.querySelectorAll(".calarrow").forEach(b=>b.onclick=()=>{let nm=m+(+b.dataset.dir),ny=y;if(nm<1){nm=12;ny--;}if(nm>12){nm=1;ny++;}my.value=ny;mm.value=nm;draw();});
+    }
+    my.addEventListener("input",draw);mm.addEventListener("change",draw);draw();
+  }
+
+  // ---------------- card grid + routing ----------------
+  const FEATURES=[
+    {id:"today",t:"Today",d:"Date and time now",run:renderToday},
+    {id:"convert",t:"Convert a date",d:"Ethiopian and Gregorian",run:renderConvert},
+    {id:"add",t:"Add days",d:"Shift a date forward or back",run:renderAdd},
+    {id:"between",t:"Days between",d:"Difference of two dates",run:renderBetween},
+    {id:"zemen",t:"ዘመን (Evangelist year)",d:"The four-evangelist year cycle",run:renderZemen},
+    {id:"leap",t:"Leap year",d:"Check if a year is leap",run:renderLeap},
+    {id:"weekday",t:"Weekday",d:"Day of the week for a date",run:renderWeekday},
+    {id:"emonth",t:"Ethiopian month",d:"Mapped to Gregorian",run:renderEthMonth},
+    {id:"gmonth",t:"Gregorian month",d:"Mapped to Ethiopian",run:renderGregMonth},
+  ];
+  const cards=document.getElementById("cards");
+  FEATURES.forEach(f=>{
+    const b=document.createElement("button");b.className="fcard";b.dataset.id=f.id;
+    b.innerHTML=`<span class="ft">${f.t}</span><span class="fd">${f.d}</span>`;
+    b.onclick=()=>select(f.id);cards.appendChild(b);
+  });
+  function select(id){
+    clearTimers();
+    document.querySelectorAll(".fcard").forEach(c=>c.classList.toggle("active",c.dataset.id===id));
+    FEATURES.find(f=>f.id===id).run();
+  }
+  select("today");
+
+}).catch(function (e) {
+  document.getElementById("panel").innerHTML =
+    "Could not load the WebAssembly module. If you opened this file directly, run a local server instead (see the README).";
+  console.error(e);
+});
+</script>
+</body>
+</html>
